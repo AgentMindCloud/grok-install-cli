@@ -1,0 +1,14 @@
+name: Feature request
+description: Suggest a new CLI command, built-in tool, or deploy target.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution

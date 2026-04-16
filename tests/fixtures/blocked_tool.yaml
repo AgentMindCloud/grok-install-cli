@@ -1,0 +1,19 @@
+spec_version: "2.12"
+name: blocked-tool-sample
+version: 0.1.0
+
+llm:
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+
+runtime:
+  type: cli
+
+safety:
+  safety_profile: balanced
+
+agents:
+  default:
+    description: demo
+    tools:
+      - mass_dm
