@@ -1,0 +1,39 @@
+spec_version: "2.12"
+name: hello-agent
+version: 0.1.0
+summary: The simplest possible Grok agent — reads files, answers questions.
+license: Apache-2.0
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+  temperature: 0.5
+
+intelligence:
+  function_calling: true
+  parallel_tool_calls: true
+  max_turns_per_session: 10
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+    - net.read
+
+safety:
+  pre_install_scan: true
+  safety_profile: balanced
+  require_human_approval:
+    - post_thread
+    - reply_to_mention
+    - post_image
+
+agents:
+  default:
+    description: A friendly file-reading, web-searching agent.
+    tools:
+      - read_file
+      - search_code
+      - web_search
+    memory: session

@@ -1,0 +1,24 @@
+name: Bug report
+description: Something isn't working.
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: grok-install version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: A grok-install.yaml + command that reproduces the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true

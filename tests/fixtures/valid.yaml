@@ -1,0 +1,39 @@
+spec_version: "2.12"
+name: valid-sample
+version: 0.1.0
+summary: A minimal valid agent used in tests.
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+  temperature: 0.5
+
+intelligence:
+  function_calling: true
+  parallel_tool_calls: true
+  multi_agent_swarm: false
+  max_turns_per_session: 5
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+    - net.read
+
+safety:
+  pre_install_scan: true
+  minimum_keys_only: true
+  safety_profile: balanced
+  require_human_approval:
+    - post_thread
+    - reply_to_mention
+    - post_image
+
+agents:
+  default:
+    description: A test agent.
+    tools:
+      - read_file
+      - web_search
+    memory: session

@@ -1,0 +1,33 @@
+spec_version: "2.12"
+name: swarm-sample
+version: 0.2.0
+summary: Two agents with hand-off.
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+
+intelligence:
+  multi_agent_swarm: true
+  max_turns_per_session: 3
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+
+safety:
+  safety_profile: strict
+
+agents:
+  triage:
+    description: Route messages to the right specialist.
+    handoff:
+      - researcher
+    tools: []
+  researcher:
+    description: Deep-dive research specialist.
+    tools:
+      - web_search
+    memory: long_term

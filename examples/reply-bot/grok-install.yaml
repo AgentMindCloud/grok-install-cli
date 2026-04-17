@@ -1,0 +1,43 @@
+spec_version: "2.12"
+name: reply-bot
+version: 0.1.0
+summary: Replies to @-mentions on X with a human-in-the-loop approval gate.
+license: Apache-2.0
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+  temperature: 0.4
+
+intelligence:
+  function_calling: true
+  max_turns_per_session: 6
+
+runtime:
+  type: x-bot
+  permissions:
+    - x.read
+    - x.write
+
+safety:
+  pre_install_scan: true
+  safety_profile: strict
+  require_human_approval:
+    - post_thread
+    - reply_to_mention
+    - post_image
+  rate_limits:
+    reply_to_mention:
+      per: hour
+      max: 10
+
+agents:
+  default:
+    description: Reads @-mentions, drafts a reply, waits for human approval.
+    tools:
+      - search_x
+      - reply_to_mention
+      - analyze_engagement
+    memory: long_term
+    max_turns_per_session: 6
