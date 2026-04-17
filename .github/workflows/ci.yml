@@ -23,8 +23,9 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e '.[dev]'
+          python -m pip install ".[dev]"
+          python -m pip list
       - name: Lint
-        run: ruff check .
+        run: python -m ruff check .
       - name: Test
-        run: pytest --cov=grok_install --cov-report=term-missing
+        run: python -m pytest -v --tb=short --cov=grok_install --cov-report=term-missing
