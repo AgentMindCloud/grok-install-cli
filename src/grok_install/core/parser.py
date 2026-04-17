@@ -1,27 +1,21 @@
 """YAML → Pydantic parser.
-
 Supports the primary ``grok-install.yaml`` plus a ``.grok/`` directory of
 overlay files that merge into the root config (last-write-wins per top-level
 key). Parse errors include the source file and, where possible, the YAML line
 number that caused validation to fail.
 """
-
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
 import yaml
 from pydantic import ValidationError
-
 from grok_install.core.models import GrokInstallConfig
 
 
 @dataclass(frozen=True)
 class ParseError(Exception):
     """Raised when a YAML file fails to parse or validate."""
-
     path: Path
     message: str
 
@@ -29,17 +23,22 @@ class ParseError(Exception):
         return f"{self.path}: {self.message}"
 
 
-class _Loader(yaml.SafeLoader):
+# ----------------------------------------------------------------------
+# Safe custom loader with line number tracking
+# ----------------------------------------------------------------------
+class _SafeLineLoader(yaml.SafeLoader):
     """SafeLoader that records line numbers on every mapping node."""
 
 
-def _construct_mapping(loader: _Loader, node: yaml.MappingNode) -> dict[str, Any]:
+def _construct_mapping(loader: yaml.SafeLoader, node: yaml.MappingNode) -> dict[str, Any]:
+    """Add __line__ key to every dict so we can show YAML line numbers in errors."""
     mapping = loader.construct_mapping(node, deep=True)
     mapping["__line__"] = node.start_mark.line + 1
     return mapping
 
 
-_Loader.add_constructor(
+# Register the constructor ONLY on our safe subclass
+_SafeLineLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_mapping
 )
 
@@ -75,12 +74,13 @@ def _read_yaml(path: Path) -> dict[str, Any]:
         raw = path.read_text(encoding="utf-8")
     except OSError as e:
         raise ParseError(path, f"cannot read file: {e}") from e
+
     try:
-        # _Loader extends yaml.SafeLoader; safe_load() doesn't take a Loader kwarg
-        # and we need custom construction to keep line numbers for error messages.
-        data = yaml.load(raw, Loader=_Loader) or {}  # noqa: S506  # nosec B506
+        # This is 100% safe (inherits from SafeLoader) → Bandit is suppressed
+        data = yaml.load(raw, Loader=_SafeLineLoader) or {}  # nosec B506
     except yaml.YAMLError as e:
         raise ParseError(path, f"invalid YAML: {e}") from e
+
     if not isinstance(data, dict):
         raise ParseError(path, "top-level YAML must be a mapping")
     return data
@@ -88,7 +88,6 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 
 def _resolve_paths(target: Path) -> tuple[Path, list[Path]]:
     """Locate grok-install.yaml + any .grok/*.yaml overlays."""
-
     if target.is_file():
         primary = target
         root = target.parent
@@ -115,7 +114,6 @@ def _resolve_paths(target: Path) -> tuple[Path, list[Path]]:
 
 def load_config(target: str | Path) -> GrokInstallConfig:
     """Load & validate a config from a directory or a file path."""
-
     return parse_config(*_load_raw(Path(target)))
 
 
@@ -129,7 +127,6 @@ def _load_raw(target: Path) -> tuple[dict[str, Any], Path]:
 
 def parse_config(data: dict[str, Any], source: Path | None = None) -> GrokInstallConfig:
     """Validate a pre-loaded dict against the Pydantic spec."""
-
     cleaned = _strip_line_markers(data)
     try:
         return GrokInstallConfig.model_validate(cleaned)
@@ -138,7 +135,7 @@ def parse_config(data: dict[str, Any], source: Path | None = None) -> GrokInstal
         header = str(source) if source else "config"
         raise ParseError(
             source or Path(header),
-            "invalid grok-install config:\n  " + "\n  ".join(lines),
+            "invalid grok-install config:\n " + "\n ".join(lines),
         ) from e
 
 
