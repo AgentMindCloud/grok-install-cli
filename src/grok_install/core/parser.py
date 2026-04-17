@@ -76,7 +76,9 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     except OSError as e:
         raise ParseError(path, f"cannot read file: {e}") from e
     try:
-        data = yaml.load(raw, Loader=_Loader) or {}
+        # _Loader extends yaml.SafeLoader; safe_load() doesn't take a Loader kwarg
+        # and we need custom construction to keep line numbers for error messages.
+        data = yaml.load(raw, Loader=_Loader) or {}  # noqa: S506  # nosec B506
     except yaml.YAMLError as e:
         raise ParseError(path, f"invalid YAML: {e}") from e
     if not isinstance(data, dict):
