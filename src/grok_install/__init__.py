@@ -1,5 +1,7 @@
 """grok-install — install, run, and deploy Grok agents from a grok-install.yaml."""
 
+__version__ = "2.0.0"
+
 from grok_install.core.models import (
     AgentDefinition,
     GrokInstallConfig,
@@ -8,11 +10,10 @@ from grok_install.core.models import (
     PromotionConfig,
     SafetyConfig,
     ToolSchema,
+    VoiceConfig,
     XNativeRuntime,
 )
 from grok_install.core.parser import load_config, parse_config
-
-__version__ = "0.1.0"
 
 __all__ = [
     "AgentDefinition",
@@ -22,6 +23,7 @@ __all__ = [
     "PromotionConfig",
     "SafetyConfig",
     "ToolSchema",
+    "VoiceConfig",
     "XNativeRuntime",
     "__version__",
     "load_config",

@@ -127,6 +127,35 @@ class PromotionConfig(_Strict):
     weekly_highlight: bool = False
 
 
+class VoiceConfig(_Strict):
+    """Voice capability — STT, TTS, microphone, speaker.
+
+    Defaults keep voice entirely off. Enabling it unlocks a new scanner surface
+    (``safety/scanner._scan_voice``) that checks for unbounded recording,
+    voice + write permission combos, and misconfigured audio permissions.
+    """
+
+    enabled: bool = False
+    stt_provider: Literal["xai", "whisper", "deepgram", "none"] = "none"
+    tts_provider: Literal["xai", "elevenlabs", "openai", "none"] = "none"
+    record_audio: bool = False
+    max_recording_seconds: int | None = Field(default=None, ge=1, le=3600)
+    store_recordings: bool = False
+    wake_word: str | None = None
+
+    @field_validator("wake_word")
+    @classmethod
+    def _check_wake_word(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("wake_word cannot be blank if set")
+        if len(stripped) > 64:
+            raise ValueError("wake_word must be 64 chars or fewer")
+        return stripped
+
+
 class ToolParameterSchema(_Strict):
     """Minimal JSON-Schema subset used to describe a tool parameter."""
 
@@ -219,6 +248,7 @@ class GrokInstallConfig(_Strict):
     runtime: XNativeRuntime = Field(default_factory=XNativeRuntime)
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     promotion: PromotionConfig = Field(default_factory=PromotionConfig)
+    voice: VoiceConfig = Field(default_factory=VoiceConfig)
     tools: list[ToolSchema] = Field(default_factory=list)
     agents: dict[str, AgentDefinition] = Field(default_factory=dict)
     deploy_targets: list[DeployTarget] = Field(default_factory=list)

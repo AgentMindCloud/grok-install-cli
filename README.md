@@ -9,6 +9,23 @@
 
 ---
 
+## What's new in v2.0
+
+- **Opt-in telemetry** — off by default, anonymous install id only, never
+  touches paths/names/configs. Kill switch: `GROKINSTALL_TELEMETRY=0`.
+  Controls: `grok-install telemetry enable | disable | status`.
+- **Swarm safety** — pre-install scanner catches handoff cycles, oversized
+  swarms, fan-out, orphan agents, and cross-agent privilege escalation.
+- **Voice safety** — new `voice:` block on the manifest, plus scanner rules
+  for unbounded recording, voice + write combos, wake-word approval gates,
+  and dead audio permissions.
+- **90% coverage floor** and a comprehensive test suite.
+
+_GrokInstall is an independent community project. Not affiliated with xAI,
+Grok, or X._
+
+---
+
 ## 60-second install
 
 ```bash

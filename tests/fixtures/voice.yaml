@@ -1,0 +1,45 @@
+spec_version: "2.12"
+name: voice-sample
+version: 0.1.0
+summary: A voice-enabled agent that scans clean.
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+
+intelligence:
+  function_calling: true
+  parallel_tool_calls: true
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+    - audio.read
+    - audio.write
+
+safety:
+  pre_install_scan: true
+  minimum_keys_only: true
+  safety_profile: strict
+  require_human_approval:
+    - post_thread
+    - reply_to_mention
+    - post_image
+
+voice:
+  enabled: true
+  stt_provider: whisper
+  tts_provider: elevenlabs
+  record_audio: true
+  max_recording_seconds: 60
+  store_recordings: false
+
+agents:
+  default:
+    description: Voice-first assistant.
+    tools:
+      - transcribe
+      - speak
+    memory: session
