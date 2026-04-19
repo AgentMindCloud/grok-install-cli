@@ -96,6 +96,52 @@ def test_object_schema_requires_properties() -> None:
         ToolParameterSchema(type="object")
 
 
+def test_parser_recognizes_grok_swarm_filename(
+    tmp_path: Path, fixtures_dir: Path
+) -> None:
+    (tmp_path / "grok-swarm.yaml").write_text(
+        (fixtures_dir / "swarm.yaml").read_text(), encoding="utf-8"
+    )
+    config = load_config(tmp_path)
+    assert config.name == "swarm-sample"
+
+
+def test_parser_recognizes_grok_voice_filename(
+    tmp_path: Path, fixtures_dir: Path
+) -> None:
+    (tmp_path / "grok-voice.yaml").write_text(
+        (fixtures_dir / "valid.yaml").read_text(), encoding="utf-8"
+    )
+    config = load_config(tmp_path)
+    assert config.name == "valid-sample"
+
+
+def test_optional_swarm_and_voice_top_level_keys(tmp_path: Path) -> None:
+    path = tmp_path / "grok-install.yaml"
+    path.write_text(
+        'spec_version: "2.12"\n'
+        "name: has-swarm-voice\n"
+        "llm:\n"
+        "  model: grok-2-latest\n"
+        "  api_key_env: XAI_API_KEY\n"
+        "swarm:\n"
+        "  enabled: true\n"
+        "  topology: star\n"
+        "  max_agents: 4\n"
+        "voice:\n"
+        "  enabled: true\n"
+        "  provider: xai-voice\n"
+        "  language: en-US\n",
+        encoding="utf-8",
+    )
+    config = load_config(path)
+    assert config.swarm is not None
+    assert config.swarm.enabled is True
+    assert config.swarm.topology == "star"
+    assert config.voice is not None
+    assert config.voice.provider == "xai-voice"
+
+
 def test_overlay_merging(tmp_path: Path, fixtures_dir: Path) -> None:
     project = tmp_path / "proj"
     project.mkdir()

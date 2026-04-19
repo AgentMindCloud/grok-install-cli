@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -66,3 +67,62 @@ def test_publish_prints_json(fixtures_dir: Path) -> None:
     result = runner.invoke(app, ["publish", str(fixtures_dir / "valid.yaml")])
     assert result.exit_code == 0
     assert "\"name\": \"valid-sample\"" in result.stdout
+
+
+def test_validate_json_ok(fixtures_dir: Path) -> None:
+    result = runner.invoke(app, ["validate", str(fixtures_dir / "valid.yaml"), "--json"])
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "validation"
+    assert payload["ok"] is True
+    assert payload["schema_version"] == "1"
+    assert payload["issues"] == []
+
+
+def test_validate_json_unknown_tool(fixtures_dir: Path) -> None:
+    result = runner.invoke(
+        app, ["validate", str(fixtures_dir / "bad_unknown_tool.yaml"), "--json"]
+    )
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "validation"
+    assert payload["ok"] is False
+    assert any(i["code"] == "unknown-tool" for i in payload["issues"])
+
+
+def test_validate_json_parse_error(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["validate", str(tmp_path), "--json"])
+    assert result.exit_code == 2
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "parse-error"
+    assert payload["ok"] is False
+    assert "message" in payload
+
+
+def test_scan_json_ok(fixtures_dir: Path) -> None:
+    result = runner.invoke(app, ["scan", str(fixtures_dir / "valid.yaml"), "--json"])
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "scan"
+    assert payload["ok"] is True
+    assert payload["schema_version"] == "1"
+    assert any(f["code"] == "scan-clean" for f in payload["findings"])
+
+
+def test_scan_json_blocked_tool(fixtures_dir: Path) -> None:
+    result = runner.invoke(
+        app, ["scan", str(fixtures_dir / "blocked_tool.yaml"), "--json"]
+    )
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "scan"
+    assert payload["ok"] is False
+    assert any(f["severity"] == "red" for f in payload["findings"])
+
+
+def test_scan_json_parse_error(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["scan", str(tmp_path), "--json"])
+    assert result.exit_code == 2
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "parse-error"
+    assert payload["ok"] is False

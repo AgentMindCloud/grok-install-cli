@@ -97,6 +97,10 @@ def _resolve_paths(target: Path) -> tuple[Path, list[Path]]:
         primary_candidates = [
             root / "grok-install.yaml",
             root / "grok-install.yml",
+            root / "grok-swarm.yaml",
+            root / "grok-swarm.yml",
+            root / "grok-voice.yaml",
+            root / "grok-voice.yml",
         ]
         primary = next((p for p in primary_candidates if p.is_file()), None)
         if primary is None:
