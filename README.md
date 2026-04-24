@@ -53,14 +53,40 @@ The CLI handles the rest.
 
 | Command | What it does |
 |---|---|
-| `grok-install init` | Scaffold a new agent project. |
-| `grok-install validate [path]` | Validate YAML against the spec. |
-| `grok-install scan [path]` | Pre-install safety scan (green / yellow / red). |
-| `grok-install run [path]` | Run the agent locally against Grok. |
+| `grok-install init [path] --name <slug>` | Scaffold a new agent project. |
+| `grok-install validate [path] [--json]` | Validate YAML against the spec. |
+| `grok-install scan [path] [--json]` | Pre-install safety scan (green / yellow / red). |
+| `grok-install run [path] [-p PROMPT] [--agent NAME] [--dry-run]` | Run the agent locally against Grok. |
 | `grok-install test [path]` | Dry-run with mock tools (no network). |
-| `grok-install deploy [path] --target vercel\|railway\|docker\|replit` | Generate deploy config. |
-| `grok-install install <github-url>` | Clone + scan + run a remote agent repo. |
-| `grok-install publish` | Print metadata for awesome-grok-agents submission. |
+| `grok-install deploy [path] --target vercel\|railway\|docker\|replit [--force]` | Generate deploy config. |
+| `grok-install install <github-url> [--dest DIR] [--run]` | Clone + scan + optionally run a remote agent repo. |
+| `grok-install publish [path]` | Print awesome-grok-agents JSON metadata on stdout. |
+| `grok-install --version` | Print the installed version. |
+
+Pass `--json` to `validate` or `scan` for a schema-stable, machine-parseable
+report on stdout. Exit codes: `0` ok, `1` validation/scan failed, `2` parse
+error. Payloads carry a `schema_version` discriminator so downstream tools can
+pin.
+
+## Project layout
+
+`grok-install` recognises any of these filenames as the primary config:
+`grok-install.yaml`, `grok-install.yml`, `grok-swarm.yaml`, `grok-swarm.yml`,
+`grok-voice.yaml`, `grok-voice.yml`. A sibling `.grok/` directory of
+`*.yaml`/`*.yml` overlays is deep-merged into the primary config (last-write
+wins per top-level key) — handy for environment-specific tweaks without
+forking the main file.
+
+Top-level blocks supported on the install spec: `llm`, `intelligence`,
+`runtime`, `safety`, `promotion`, `tools`, `agents`, `swarm`, `voice`,
+`deploy_targets`, `env`. Runtime `type` is one of `cli`, `x-bot`, `webhook`,
+`scheduled` (requires a cron `schedule`), or `http`.
+
+## Multi-agent swarm
+
+Set `intelligence.multi_agent_swarm: true` and declare each agent's `handoff:`
+list. At runtime `SwarmOrchestrator` drives the hops with a cycle guard, and
+an agent can transfer control by calling the built-in `handoff_to` tool.
 
 ## Works with the official xAI SDK
 
@@ -95,7 +121,7 @@ See [SECURITY.md](./SECURITY.md) for the full threat model.
 |---|---|---|
 | Lines to get running | ~80 | 12 (YAML) |
 | Built-in safety gate | ✗ | ✓ |
-| Tool registry | ✗ | 20+ built-ins |
+| Tool registry | ✗ | 17 built-ins |
 | Multi-agent swarm | DIY | `multi_agent_swarm: true` |
 | Memory | DIY | SQLite, session + long_term |
 | Deploy configs | DIY | `--target vercel\|railway\|docker\|replit` |
