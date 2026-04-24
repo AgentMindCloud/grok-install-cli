@@ -32,6 +32,10 @@
 
 ## ✦ 60-Second Install
 
+> **Note:** the PyPI package is published on every `v*.*.*` tag. If
+> `pip install grok-install` can't find the package yet, install directly from
+> source: `pip install 'git+https://github.com/agentmindcloud/grok-install-cli'`.
+
 ```bash
 pip install grok-install
 export XAI_API_KEY=...
