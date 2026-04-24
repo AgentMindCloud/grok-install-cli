@@ -22,7 +22,7 @@
 <p align="center">
   <a href="https://github.com/agentmindcloud/grok-install-cli/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/agentmindcloud/grok-install-cli/ci.yml?branch=main&label=CI&style=for-the-badge&color=00E5FF&labelColor=0A0D14" /></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python%203.10%20%7C%203.11%20%7C%203.12-7C3AED?style=for-the-badge&logo=python&logoColor=FFFFFF&labelColor=0A0D14" /></a>
-  <a href="https://github.com/xai-org/xai-sdk"><img src="https://img.shields.io/badge/Works%20with%20xai--sdk-FF4FD8?style=for-the-badge&logoColor=FFFFFF&labelColor=0A0D14" /></a>
+  <a href="https://github.com/xai-org/xai-sdk-python"><img src="https://img.shields.io/badge/Works%20with%20xai--sdk-FF4FD8?style=for-the-badge&logoColor=FFFFFF&labelColor=0A0D14" /></a>
   <img src="https://img.shields.io/badge/Spec%20v2.12-00D5FF?style=for-the-badge&logoColor=001018&labelColor=0A0D14" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/Apache%202.0-9D4EDD?style=for-the-badge&logoColor=FFFFFF&labelColor=0A0D14" /></a>
   <a href="https://github.com/agentmindcloud/grok-install-cli"><img src="https://img.shields.io/github/stars/agentmindcloud/grok-install-cli?style=for-the-badge&color=5EF2FF&logoColor=001018&labelColor=0A0D14" /></a>

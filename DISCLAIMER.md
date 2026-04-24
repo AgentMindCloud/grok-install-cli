@@ -8,7 +8,7 @@ validating, running, and deploying Grok agents from a single YAML file.
 - "Grok" and "xAI" are trademarks of their respective owners. References to
   these names describe interoperability only.
 - `grok-install` wraps — but does not re-implement — the official
-  [`xai-sdk`](https://github.com/xai-org/xai-sdk). Upgrade the SDK on your
+  [`xai-sdk`](https://github.com/xai-org/xai-sdk-python). Upgrade the SDK on your
   own cadence.
 - The pre-install safety scanner and `RuntimeSafetyGate` are best-effort
   defensive tools. They reduce common mistakes (hard-coded secrets, missing
