@@ -1,0 +1,32 @@
+spec_version: "2.12"
+name: swarm-cycle-sample
+version: 0.1.0
+summary: Two agents that hand off in a cycle.
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+
+intelligence:
+  multi_agent_swarm: true
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+
+safety:
+  safety_profile: balanced
+
+agents:
+  alpha:
+    description: Hands off to bravo.
+    handoff:
+      - bravo
+    tools: []
+  bravo:
+    description: Hands back to alpha (forms a cycle).
+    handoff:
+      - alpha
+    tools: []

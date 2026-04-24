@@ -1,0 +1,31 @@
+spec_version: "2.12"
+name: voice-bad-sample
+version: 0.1.0
+summary: Voice agent that records without a bound and stores recordings.
+
+llm:
+  provider: xai
+  model: grok-2-latest
+  api_key_env: XAI_API_KEY
+
+runtime:
+  type: cli
+  permissions:
+    - fs.read
+    - audio.record
+
+safety:
+  pre_install_scan: true
+  minimum_keys_only: true
+  safety_profile: balanced
+
+voice:
+  enabled: true
+  record_audio: true
+  store_recordings: true
+
+agents:
+  default:
+    description: Records audio without a ceiling.
+    tools: []
+    memory: session
