@@ -3,7 +3,8 @@
 **The `npm install` for Grok agents.** Declare your agent in a single
 `grok-install.yaml`, then install, run, and deploy it with one command.
 
-[![PyPI](https://img.shields.io/pypi/v/grok-install.svg)](https://pypi.org/project/grok-install/)
+[![CI](https://github.com/agentmindcloud/grok-install-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/agentmindcloud/grok-install-cli/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-3776ab.svg)](https://www.python.org/)
 [![Works with xai-sdk](https://img.shields.io/badge/works%20with-xai--sdk-3f3f46.svg)](https://github.com/xai-org/xai-sdk)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 
