@@ -126,8 +126,21 @@ def init(
 @app.command()
 def validate(
     path: Path = typer.Argument(Path("."), help="Config file or project directory."),
+    json_output: bool = typer.Option(
+        False, "--json", help="Emit a machine-parseable JSON report on stdout."
+    ),
 ) -> None:
     """Validate a config against the grok-install spec."""
+
+    if json_output:
+        try:
+            config = load_config(path)
+        except ParseError as e:
+            typer.echo(json.dumps(_parse_error_payload(e), indent=2))
+            raise typer.Exit(code=2) from e
+        report = validate_config(config)
+        typer.echo(json.dumps(_validation_payload(report), indent=2))
+        raise typer.Exit(code=0 if report.ok else 1)
 
     config = _load_or_exit(path)
     report = validate_config(config)
@@ -141,8 +154,23 @@ def validate(
 @app.command()
 def scan(
     path: Path = typer.Argument(Path("."), help="Config file or project directory."),
+    json_output: bool = typer.Option(
+        False, "--json", help="Emit a machine-parseable JSON report on stdout."
+    ),
 ) -> None:
     """Run the pre-install safety scan."""
+
+    if json_output:
+        try:
+            config = load_config(path)
+        except ParseError as e:
+            typer.echo(json.dumps(_parse_error_payload(e), indent=2))
+            raise typer.Exit(code=2) from e
+        primary = _primary_file(path)
+        raw = primary.read_text(encoding="utf-8") if primary else None
+        report = scan_config(config, raw_text=raw)
+        typer.echo(json.dumps(_scan_payload(report), indent=2))
+        raise typer.Exit(code=report.exit_code)
 
     config = _load_or_exit(path)
     primary = _primary_file(path)
@@ -319,11 +347,68 @@ def _load_or_exit(path: Path):
 def _primary_file(path: Path) -> Path | None:
     if path.is_file():
         return path
-    for name in ("grok-install.yaml", "grok-install.yml"):
+    for name in (
+        "grok-install.yaml",
+        "grok-install.yml",
+        "grok-swarm.yaml",
+        "grok-swarm.yml",
+        "grok-voice.yaml",
+        "grok-voice.yml",
+    ):
         candidate = path / name
         if candidate.is_file():
             return candidate
     return None
+
+
+# JSON output payloads are schema-stable: the shape of these dicts is public
+# API — consumers rely on the top-level keys and the "kind" discriminator.
+
+_JSON_SCHEMA_VERSION = "1"
+
+
+def _parse_error_payload(err: ParseError) -> dict:
+    return {
+        "kind": "parse-error",
+        "schema_version": _JSON_SCHEMA_VERSION,
+        "ok": False,
+        "path": str(err.path),
+        "message": err.message,
+    }
+
+
+def _validation_payload(report) -> dict:
+    return {
+        "kind": "validation",
+        "schema_version": _JSON_SCHEMA_VERSION,
+        "ok": report.ok,
+        "issues": [
+            {
+                "level": i.level,
+                "code": i.code,
+                "message": i.message,
+                "path": i.path,
+            }
+            for i in report.issues
+        ],
+    }
+
+
+def _scan_payload(report: SafetyReport) -> dict:
+    return {
+        "kind": "scan",
+        "schema_version": _JSON_SCHEMA_VERSION,
+        "ok": report.ok,
+        "findings": [
+            {
+                "severity": f.severity,
+                "code": f.code,
+                "message": f.message,
+                "path": f.path,
+            }
+            for f in report.findings
+        ],
+    }
 
 
 def _project_root(path: Path) -> Path:

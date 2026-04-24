@@ -127,6 +127,24 @@ class PromotionConfig(_Strict):
     weekly_highlight: bool = False
 
 
+class SwarmConfig(_Strict):
+    """Optional swarm-orchestration config (grok-yaml-standards@2.0+)."""
+
+    enabled: bool = False
+    topology: Literal["star", "mesh", "pipeline"] | None = None
+    max_agents: int | None = Field(default=None, ge=1, le=128)
+    entrypoint: str | None = None
+
+
+class VoiceConfig(_Strict):
+    """Optional voice-runtime config (grok-yaml-standards@2.0+)."""
+
+    enabled: bool = False
+    provider: str | None = None
+    voice: str | None = None
+    language: str | None = None
+
+
 class ToolParameterSchema(_Strict):
     """Minimal JSON-Schema subset used to describe a tool parameter."""
 
@@ -221,6 +239,8 @@ class GrokInstallConfig(_Strict):
     promotion: PromotionConfig = Field(default_factory=PromotionConfig)
     tools: list[ToolSchema] = Field(default_factory=list)
     agents: dict[str, AgentDefinition] = Field(default_factory=dict)
+    swarm: SwarmConfig | None = None
+    voice: VoiceConfig | None = None
     deploy_targets: list[DeployTarget] = Field(default_factory=list)
     env: dict[str, str] = Field(
         default_factory=dict,
