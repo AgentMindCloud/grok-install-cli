@@ -2,7 +2,7 @@
 
 <p align="center">
   <img
-    src="https://capsule-render.vercel.app/api?type=waving&height=230&color=0:00E5FF,50:7C3AED,100:FF4FD8&text=grok-install&fontSize=54&fontColor=EAF8FF&fontAlign=50&fontAlignY=38&desc=The%20npm%20install%20for%20Grok%20Agents%20%E2%80%94%20YAML%20In%2C%20Live%20Agent%20Out&descAlignY=62&descSize=17"
+    src="https://capsule-render.vercel.app/api?type=waving&height=230&color=0:00E5FF,50:7C3AED,100:FF4FD8&text=cli-grok-install&fontSize=48&fontColor=EAF8FF&fontAlign=50&fontAlignY=38&desc=The%20npm%20install%20for%20Grok%20Agents%20%E2%80%94%20YAML%20In%2C%20Live%20Agent%20Out&descAlignY=62&descSize=17"
     width="100%"
     alt="header"
   />
