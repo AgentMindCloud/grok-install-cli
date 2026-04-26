@@ -1,0 +1,33 @@
+title: grok-install
+description: Install, run, and deploy Grok agents from a grok-install.yaml — the npm install for xAI agents.
+url: https://agentmindcloud.github.io
+baseurl: /grok-install-cli
+
+twitter:
+  username: agentmindcloud
+  card: summary_large_image
+
+plugins:
+  - jekyll-seo-tag
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+      image: /docs/posters/og-default.png
+
+exclude:
+  - scripts/
+  - schemas/
+  - tests/
+  - src/
+  - examples/
+  - "*.lock"
+  - .github/
+  - pyproject.toml
+  - CONTRIBUTING.md
+  - SECURITY.md
+  - DISCLAIMER.md
+  - CHANGELOG.md
+  - LICENSE

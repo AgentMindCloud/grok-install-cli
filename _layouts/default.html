@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% seo %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
+  <style>
+    html, body { background: #0b0f17; color: #c9d1d9; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 45px; }
+    .markdown-body { background: transparent; }
+    @media (max-width: 767px) { .wrap { padding: 15px; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <article class="markdown-body">
+      {{ content }}
+    </article>
+  </main>
+</body>
+</html>
