@@ -1,3 +1,8 @@
+---
+title: grok-install
+description: The npm install for Grok agents — declare your agent in a single grok-install.yaml, then install, run, and deploy it with one command.
+image: /docs/posters/og-default.png
+---
 <!-- NEON / CYBERPUNK REPO TEMPLATE · GROK-INSTALL-CLI -->
 
 <p align="center">
