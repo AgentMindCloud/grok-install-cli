@@ -22,6 +22,20 @@ from grok_install.runtime.client import GrokClient
 from grok_install.runtime.memory import MemoryStore
 from grok_install.runtime.tools import ToolExecutor, ToolRegistry
 from grok_install.safety.scanner import RuntimeSafetyGate, SafetyReport, scan_config
+from grok_install.telemetry import (
+    build_event,
+    disable_telemetry,
+    emit,
+    enable_telemetry,
+    schema_description,
+)
+from grok_install.telemetry import config_path as telemetry_config_path
+from grok_install.telemetry import (
+    is_enabled as telemetry_is_enabled,
+)
+from grok_install.telemetry import (
+    load_config as load_telemetry_config,
+)
 
 app = typer.Typer(
     name="grok-install",
@@ -30,6 +44,27 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+
+telemetry_app = typer.Typer(
+    name="telemetry",
+    help="Opt-in telemetry controls. Off by default; honors GROKINSTALL_TELEMETRY=0.",
+    no_args_is_help=True,
+    add_completion=False,
+)
+app.add_typer(telemetry_app, name="telemetry")
+
+
+def _safe_emit(name: str, **extra: object) -> None:
+    """Emit a telemetry event, swallowing any error and respecting opt-in/kill-switch."""
+    try:
+        if not telemetry_is_enabled():
+            return
+        cfg = load_telemetry_config()
+        if not cfg.install_id:
+            return
+        emit(build_event(name, cfg.install_id, **extra))
+    except Exception:
+        return
 
 
 def _version_callback(value: bool) -> None:
@@ -170,6 +205,7 @@ def scan(
         raw = primary.read_text(encoding="utf-8") if primary else None
         report = scan_config(config, raw_text=raw)
         typer.echo(json.dumps(_scan_payload(report), indent=2))
+        _safe_emit("scan.run", result="ok" if report.ok else "fail")
         raise typer.Exit(code=report.exit_code)
 
     config = _load_or_exit(path)
@@ -177,6 +213,7 @@ def scan(
     raw = primary.read_text(encoding="utf-8") if primary else None
     report = scan_config(config, raw_text=raw)
     _render_scan(report)
+    _safe_emit("scan.run", result="ok" if report.ok else "fail")
     raise typer.Exit(code=report.exit_code)
 
 
@@ -459,6 +496,77 @@ def _cli_approval(name: str, arguments: dict) -> bool:
         return False
     answer = input("Approve? [y/N] ").strip().lower()
     return answer in {"y", "yes"}
+
+
+# --- telemetry --------------------------------------------------------------
+
+
+@telemetry_app.command("enable")
+def telemetry_enable_cmd(
+    endpoint: str = typer.Option(
+        ..., "--endpoint", help="HTTPS URL that will receive anonymous events."
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the interactive prompt."),
+) -> None:
+    """Opt in to anonymous usage telemetry."""
+
+    console.print(
+        Panel(
+            "[bold]grok-install will send anonymous usage events[/]\n\n"
+            "• Events contain: CLI version, Python version, sys.platform,\n"
+            "  anonymous install id (UUID), duration, ok/fail result.\n"
+            "• Events NEVER contain: paths, agent names, tool names, config\n"
+            "  contents, or any identifier of you or your project.\n"
+            "• Kill switch: set [cyan]GROKINSTALL_TELEMETRY=0[/] to disable.\n"
+            f"• Config file: [cyan]{telemetry_config_path()}[/]\n",
+            title="telemetry disclosure",
+            border_style="cyan",
+        )
+    )
+    if not yes:
+        if not sys.stdin.isatty():
+            console.print(
+                "[yellow]stdin is not a tty — pass --yes to confirm opt-in[/]"
+            )
+            raise typer.Exit(code=1)
+        answer = input("Opt in? [y/N] ").strip().lower()
+        if answer not in {"y", "yes"}:
+            console.print("[yellow]aborted — telemetry remains disabled[/]")
+            raise typer.Exit(code=1)
+    cfg = enable_telemetry(endpoint=endpoint)
+    console.print(
+        f"[green]✓[/] telemetry enabled (install_id={cfg.install_id}, "
+        f"endpoint={cfg.endpoint})"
+    )
+
+
+@telemetry_app.command("disable")
+def telemetry_disable_cmd() -> None:
+    """Opt out and wipe the anonymous install id."""
+
+    disable_telemetry()
+    console.print("[green]✓[/] telemetry disabled; install_id cleared")
+
+
+@telemetry_app.command("status")
+def telemetry_status_cmd() -> None:
+    """Show current telemetry state and the exact event schema."""
+
+    cfg = load_telemetry_config()
+    active = telemetry_is_enabled()
+    state = "[green]enabled[/]" if active else "[yellow]disabled[/]"
+    console.print(
+        Panel(
+            f"state: {state}\n"
+            f"install_id: {cfg.install_id or '(none)'}\n"
+            f"endpoint: {cfg.endpoint or '(none)'}\n"
+            f"opted_in_at: {cfg.opted_in_at or '(never)'}\n"
+            f"config: {telemetry_config_path()}\n",
+            title="telemetry",
+            border_style="cyan",
+        )
+    )
+    console.print(Panel(schema_description(), title="event schema", border_style="dim"))
 
 
 if __name__ == "__main__":

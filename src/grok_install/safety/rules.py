@@ -65,3 +65,30 @@ REQUIRE_APPROVAL_DEFAULT: Final[frozenset[str]] = frozenset(
         "run_command",
     }
 )
+
+# --- swarm rules ------------------------------------------------------------
+
+SWARM_MAX_AGENT_COUNT: Final[int] = 16
+SWARM_MAX_HANDOFF_FANOUT: Final[int] = 5
+
+SWARM_WRITE_PERMISSIONS: Final[frozenset[str]] = frozenset(
+    {
+        "x.write",
+        "github.write",
+        "net.write",
+        "fs.write",
+        "shell.exec",
+    }
+)
+
+# --- voice rules ------------------------------------------------------------
+
+VOICE_MAX_RECORDING_SECONDS_WARN: Final[int] = 300
+
+VOICE_PERMISSIONS: Final[frozenset[str]] = frozenset(
+    {
+        "audio.read",
+        "audio.write",
+        "audio.record",
+    }
+)

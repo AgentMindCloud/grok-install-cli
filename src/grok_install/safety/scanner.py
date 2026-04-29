@@ -13,6 +13,11 @@ from grok_install.safety.rules import (
     HIGH_RISK_PERMISSIONS,
     REQUIRE_APPROVAL_DEFAULT,
     SENSITIVE_ENV_PREFIXES,
+    SWARM_MAX_AGENT_COUNT,
+    SWARM_MAX_HANDOFF_FANOUT,
+    SWARM_WRITE_PERMISSIONS,
+    VOICE_MAX_RECORDING_SECONDS_WARN,
+    VOICE_PERMISSIONS,
 )
 
 Severity = Literal["green", "yellow", "red"]
@@ -68,6 +73,8 @@ def scan_config(config: GrokInstallConfig, *, raw_text: str | None = None) -> Sa
     _scan_env(config, report)
     _scan_rate_limits(config, report)
     _scan_approval_flags(config, report)
+    _scan_swarm(config, report)
+    _scan_voice(config, report)
     if raw_text is not None:
         _scan_raw_text(raw_text, report)
 
@@ -192,6 +199,234 @@ def _all_tool_names(config: GrokInstallConfig) -> list[str]:
     for agent in config.agents.values():
         names.update(agent.tools)
     return list(names)
+
+
+def _scan_swarm(config: GrokInstallConfig, report: SafetyReport) -> None:
+    agents = config.agents
+    if not agents:
+        return
+
+    agent_count = len(agents)
+    if agent_count > 1 and not config.intelligence.multi_agent_swarm:
+        report.add(
+            "red",
+            "swarm-flag-missing",
+            "multiple agents declared but intelligence.multi_agent_swarm is false",
+            path="intelligence.multi_agent_swarm",
+        )
+
+    if agent_count > SWARM_MAX_AGENT_COUNT:
+        report.add(
+            "yellow",
+            "swarm-too-large",
+            f"{agent_count} agents declared (max recommended {SWARM_MAX_AGENT_COUNT})",
+            path="agents",
+        )
+
+    for agent_name, agent in agents.items():
+        for target in agent.handoff:
+            if target not in agents:
+                report.add(
+                    "red",
+                    "swarm-handoff-unknown",
+                    f"agent {agent_name!r} hands off to unknown agent {target!r}",
+                    path=f"agents.{agent_name}.handoff",
+                )
+        if len(agent.handoff) > SWARM_MAX_HANDOFF_FANOUT:
+            report.add(
+                "yellow",
+                "swarm-fanout",
+                f"agent {agent_name!r} hands off to {len(agent.handoff)} targets "
+                f"(max recommended {SWARM_MAX_HANDOFF_FANOUT})",
+                path=f"agents.{agent_name}.handoff",
+            )
+
+    cycles = _find_handoff_cycles(agents)
+    for cycle in cycles:
+        report.add(
+            "red",
+            "swarm-cycle",
+            "handoff cycle: " + " -> ".join(cycle),
+            path="agents",
+        )
+
+    reachable_from = _reachability(agents)
+    if agent_count > 1:
+        entry = next(iter(agents))
+        reachable_from_entry = reachable_from.get(entry, set()) | {entry}
+        for name in agents:
+            if name not in reachable_from_entry:
+                report.add(
+                    "yellow",
+                    "swarm-orphan-agent",
+                    f"agent {name!r} is not reachable from entry agent {entry!r}",
+                    path=f"agents.{name}",
+                )
+
+    _scan_swarm_privilege_escalation(config, reachable_from, report)
+
+
+def _scan_swarm_privilege_escalation(
+    config: GrokInstallConfig,
+    reachable_from: dict[str, set[str]],
+    report: SafetyReport,
+) -> None:
+    tool_permissions = {t.name: (t.permission or "") for t in config.tools}
+    approvals = set(config.safety.require_human_approval)
+    strict = config.safety.safety_profile == "strict"
+
+    def agent_write_tools(agent_name: str) -> list[str]:
+        agent = config.agents[agent_name]
+        return [
+            t for t in agent.tools if tool_permissions.get(t, "") in SWARM_WRITE_PERMISSIONS
+        ]
+
+    for agent_name, agent in config.agents.items():
+        caller_perms = [tool_permissions.get(t, "") for t in agent.tools]
+        caller_has_write = any(p in SWARM_WRITE_PERMISSIONS for p in caller_perms)
+        if caller_has_write:
+            continue
+        reachable = reachable_from.get(agent_name, set())
+        for target_name in reachable:
+            if target_name == agent_name:
+                continue
+            write_tools = agent_write_tools(target_name)
+            if not write_tools:
+                continue
+            if strict and all(t in approvals for t in write_tools):
+                continue
+            report.add(
+                "red",
+                "swarm-privilege-escalation",
+                (
+                    f"agent {agent_name!r} (no write perms) can hand off to "
+                    f"{target_name!r} which calls write tool(s) {write_tools!r}; "
+                    "require strict profile + explicit approval"
+                ),
+                path=f"agents.{agent_name}.handoff",
+            )
+
+
+def _find_handoff_cycles(agents: dict) -> list[list[str]]:
+    cycles: list[list[str]] = []
+    seen_cycles: set[tuple[str, ...]] = set()
+
+    def walk(start: str, path: list[str]) -> None:
+        last = path[-1]
+        for nxt in agents[last].handoff:
+            if nxt not in agents:
+                continue
+            if nxt in path:
+                cycle = path[path.index(nxt):] + [nxt]
+                key = tuple(sorted(cycle[:-1]))
+                if key not in seen_cycles:
+                    seen_cycles.add(key)
+                    cycles.append(cycle)
+                continue
+            walk(start, path + [nxt])
+
+    for name in agents:
+        walk(name, [name])
+    return cycles
+
+
+def _reachability(agents: dict) -> dict[str, set[str]]:
+    out: dict[str, set[str]] = {name: set() for name in agents}
+    for start in agents:
+        stack = [start]
+        visited: set[str] = set()
+        while stack:
+            cur = stack.pop()
+            for nxt in agents[cur].handoff:
+                if nxt in agents and nxt not in visited:
+                    visited.add(nxt)
+                    stack.append(nxt)
+        out[start] = visited
+    return out
+
+
+def _scan_voice(config: GrokInstallConfig, report: SafetyReport) -> None:
+    voice = config.voice
+    perms = set(config.runtime.permissions)
+    audio_perms_present = bool(perms & VOICE_PERMISSIONS)
+    tool_permissions = {t.name: (t.permission or "") for t in config.tools}
+
+    if not voice.enabled:
+        if audio_perms_present:
+            report.add(
+                "red",
+                "voice-perm-without-enable",
+                "runtime declares audio.* permissions but voice.enabled is false",
+                path="runtime.permissions",
+            )
+        return
+
+    if voice.record_audio and voice.max_recording_seconds is None:
+        report.add(
+            "red",
+            "voice-unbounded-recording",
+            "voice.record_audio is true but max_recording_seconds is not set",
+            path="voice.max_recording_seconds",
+        )
+
+    writer_tools = [
+        name for name, perm in tool_permissions.items() if perm in SWARM_WRITE_PERMISSIONS
+    ]
+    writer_tools += [p for p in perms if p in SWARM_WRITE_PERMISSIONS]
+    has_write_surface = bool(writer_tools)
+
+    if config.safety.safety_profile == "research" and has_write_surface:
+        report.add(
+            "red",
+            "voice-research-write-combo",
+            "voice enabled with research profile and write permissions — unsafe combo",
+            path="voice.enabled",
+        )
+
+    if voice.wake_word:
+        approvals = set(config.safety.require_human_approval)
+        tool_writers = [
+            name
+            for name, perm in tool_permissions.items()
+            if perm in SWARM_WRITE_PERMISSIONS
+        ]
+        missing = [t for t in tool_writers if t not in approvals]
+        if missing:
+            report.add(
+                "red",
+                "voice-wake-write-without-approval",
+                "wake_word set but write tools lack require_human_approval: "
+                + ", ".join(sorted(missing)),
+                path="safety.require_human_approval",
+            )
+
+    if (
+        voice.max_recording_seconds is not None
+        and voice.max_recording_seconds > VOICE_MAX_RECORDING_SECONDS_WARN
+    ):
+        report.add(
+            "yellow",
+            "voice-long-recording",
+            f"max_recording_seconds={voice.max_recording_seconds} exceeds "
+            f"recommended {VOICE_MAX_RECORDING_SECONDS_WARN}s",
+            path="voice.max_recording_seconds",
+        )
+
+    if voice.store_recordings and config.safety.safety_profile != "strict":
+        report.add(
+            "yellow",
+            "voice-store-loose-profile",
+            "voice.store_recordings is true without strict safety profile",
+            path="voice.store_recordings",
+        )
+
+    if not audio_perms_present:
+        report.add(
+            "yellow",
+            "voice-missing-audio-perm",
+            "voice enabled but no audio.* permission in runtime.permissions",
+            path="runtime.permissions",
+        )
 
 
 def _scan_raw_text(raw: str, report: SafetyReport) -> None:

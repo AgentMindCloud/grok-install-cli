@@ -137,12 +137,39 @@ class SwarmConfig(_Strict):
 
 
 class VoiceConfig(_Strict):
-    """Optional voice-runtime config (grok-yaml-standards@2.0+)."""
+    """Voice runtime + safety surface (grok-yaml-standards@2.0+).
+
+    Defaults keep voice off. When enabled, the safety scanner enforces
+    bounded recording, write-permission combos, wake-word approval gating,
+    and audio-permission consistency.
+    """
 
     enabled: bool = False
+
+    # legacy fields
     provider: str | None = None
     voice: str | None = None
     language: str | None = None
+
+    # current schema
+    stt_provider: Literal["xai", "whisper", "deepgram", "none"] = "none"
+    tts_provider: Literal["xai", "elevenlabs", "openai", "none"] = "none"
+    record_audio: bool = False
+    max_recording_seconds: int | None = Field(default=None, ge=1, le=3600)
+    store_recordings: bool = False
+    wake_word: str | None = None
+
+    @field_validator("wake_word")
+    @classmethod
+    def _check_wake_word(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("wake_word cannot be blank if set")
+        if len(stripped) > 64:
+            raise ValueError("wake_word must be 64 chars or fewer")
+        return stripped
 
 
 class ToolParameterSchema(_Strict):
@@ -240,7 +267,7 @@ class GrokInstallConfig(_Strict):
     tools: list[ToolSchema] = Field(default_factory=list)
     agents: dict[str, AgentDefinition] = Field(default_factory=dict)
     swarm: SwarmConfig | None = None
-    voice: VoiceConfig | None = None
+    voice: VoiceConfig = Field(default_factory=VoiceConfig)
     deploy_targets: list[DeployTarget] = Field(default_factory=list)
     env: dict[str, str] = Field(
         default_factory=dict,
