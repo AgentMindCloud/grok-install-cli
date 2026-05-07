@@ -25,21 +25,19 @@ image: /docs/posters/og-default.png
 </p>
 
 <p align="center">
-  <a href="https://github.com/agentmindcloud/grok-install-cli/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/agentmindcloud/grok-install-cli/ci.yml?branch=main&label=CI&style=for-the-badge&color=00E5FF&labelColor=0A0D14" /></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python%203.10%20%7C%203.11%20%7C%203.12-7C3AED?style=for-the-badge&logo=python&logoColor=FFFFFF&labelColor=0A0D14" /></a>
+  <a href="https://pypi.org/project/grok-install/"><img src="https://img.shields.io/pypi/v/grok-install?style=for-the-badge&color=00E5FF&labelColor=0A0D14&label=PyPI" /></a>
+  <a href="https://pypi.org/project/grok-install/"><img src="https://img.shields.io/pypi/pyversions/grok-install?style=for-the-badge&color=7C3AED&labelColor=0A0D14&label=Python" /></a>
+  <a href="https://pypi.org/project/grok-install/"><img src="https://img.shields.io/pypi/dm/grok-install?style=for-the-badge&color=FF4FD8&labelColor=0A0D14&label=Downloads" /></a>
+  <a href="https://github.com/agentmindcloud/grok-install-cli/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/agentmindcloud/grok-install-cli/ci.yml?branch=main&label=CI&style=for-the-badge&color=00D5FF&labelColor=0A0D14" /></a>
   <a href="https://github.com/xai-org/xai-sdk-python"><img src="https://img.shields.io/badge/Works%20with%20xai--sdk-FF4FD8?style=for-the-badge&logoColor=FFFFFF&labelColor=0A0D14" /></a>
-  <img src="https://img.shields.io/badge/Spec%20v2.12-00D5FF?style=for-the-badge&logoColor=001018&labelColor=0A0D14" />
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/Apache%202.0-9D4EDD?style=for-the-badge&logoColor=FFFFFF&labelColor=0A0D14" /></a>
-  <a href="https://github.com/agentmindcloud/grok-install-cli"><img src="https://img.shields.io/github/stars/agentmindcloud/grok-install-cli?style=for-the-badge&color=5EF2FF&logoColor=001018&labelColor=0A0D14" /></a>
+  <img src="https://img.shields.io/badge/Spec%20v2.12-5EF2FF?style=for-the-badge&logoColor=001018&labelColor=0A0D14" />
+  <a href="./LICENSE"><img src="https://img.shields.io/pypi/l/grok-install?style=for-the-badge&color=9D4EDD&labelColor=0A0D14&label=License" /></a>
+  <a href="https://github.com/agentmindcloud/grok-install-cli"><img src="https://img.shields.io/github/stars/agentmindcloud/grok-install-cli?style=for-the-badge&color=C026D3&logoColor=001018&labelColor=0A0D14" /></a>
 </p>
 
 ---
 
 ## ✦ 60-Second Install
-
-> **Note:** the PyPI package is published on every `v*.*.*` tag. If
-> `pip install grok-install` can't find the package yet, install directly from
-> source: `pip install 'git+https://github.com/agentmindcloud/grok-install-cli'`.
 
 ```bash
 pip install grok-install
